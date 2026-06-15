@@ -1,0 +1,150 @@
+/* GymReserve — estilos */
+
+:root {
+  --verd: #2f7d5b;
+  --verd-fosc: #245f46;
+  --gris-fons: #f4f6f5;
+  --gris-vora: #e0e4e2;
+  --text: #1d2b25;
+  --text-suau: #5f6b66;
+  --vermell: #c0392b;
+  --radi: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--gris-fons);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* --- Barra superior --- */
+header {
+  background: #fff;
+  border-bottom: 1px solid var(--gris-vora);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.logo { font-size: 20px; font-weight: 700; color: var(--verd); cursor: pointer; }
+nav { display: flex; gap: 8px; align-items: center; }
+
+/* --- Contenedor --- */
+main { max-width: 800px; margin: 28px auto; padding: 0 20px; }
+.vista { display: none; }
+.vista.activa { display: block; }
+
+h1 { font-size: 24px; margin-bottom: 4px; }
+h2 { font-size: 18px; margin: 20px 0 10px; }
+.subtitol { color: var(--text-suau); margin-bottom: 20px; }
+
+/* --- Botones --- */
+button {
+  font: inherit;
+  border: none;
+  border-radius: var(--radi);
+  padding: 9px 16px;
+  cursor: pointer;
+  background: var(--verd);
+  color: #fff;
+  font-weight: 600;
+  transition: background .15s;
+}
+button:hover { background: var(--verd-fosc); }
+button.secundari { background: #fff; color: var(--text); border: 1px solid var(--gris-vora); }
+button.secundari:hover { background: var(--gris-fons); }
+button.perill { background: var(--vermell); }
+button.perill:hover { background: #a5281c; }
+button:disabled { background: var(--gris-vora); color: var(--text-suau); cursor: not-allowed; }
+button.petit { padding: 5px 12px; font-size: 14px; }
+
+/* --- Tarjetas de clase --- */
+.dia-titol {
+  font-size: 13px; text-transform: uppercase; letter-spacing: .5px;
+  color: var(--text-suau); margin: 18px 0 8px;
+}
+.targeta {
+  background: #fff;
+  border: 1px solid var(--gris-vora);
+  border-radius: var(--radi);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.targeta .info { cursor: pointer; flex: 1; }
+.targeta .hora { font-weight: 700; }
+.targeta .meta { color: var(--text-suau); font-size: 14px; }
+.plena { color: var(--vermell); font-weight: 600; }
+.lliure { color: var(--verd); font-weight: 600; }
+
+/* --- Filtros --- */
+.filtres { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.filtres select, .filtres input {
+  padding: 8px 10px; border: 1px solid var(--gris-vora);
+  border-radius: var(--radi); font: inherit; background: #fff;
+}
+
+/* --- Formularios --- */
+.form { background: #fff; border: 1px solid var(--gris-vora);
+        border-radius: var(--radi); padding: 24px; max-width: 380px; margin: 0 auto; }
+.form label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 4px; }
+.form input {
+  width: 100%; padding: 9px 11px; border: 1px solid var(--gris-vora);
+  border-radius: var(--radi); font: inherit;
+}
+.form button { width: 100%; margin-top: 18px; }
+.enllac { background: none; color: var(--verd); padding: 0; margin-top: 14px;
+          width: auto; font-weight: 600; text-decoration: underline; }
+.enllac:hover { background: none; }
+
+/* --- Detalle --- */
+.detall { background: #fff; border: 1px solid var(--gris-vora);
+          border-radius: var(--radi); padding: 24px; }
+.detall .dada { margin: 8px 0; }
+.detall .dada b { display: inline-block; width: 130px; color: var(--text-suau); }
+
+/* --- Perfil / listas --- */
+.fila {
+  background: #fff; border: 1px solid var(--gris-vora); border-radius: var(--radi);
+  padding: 12px 16px; margin-bottom: 8px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.estat-tag { font-size: 13px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.tag-confirmada { background: #e3f3eb; color: var(--verd-fosc); }
+.tag-cancelada  { background: #fdecea; color: var(--vermell); }
+.tag-assistida  { background: #eef0ef; color: var(--text-suau); }
+
+/* --- Avisos --- */
+.avis {
+  padding: 10px 14px; border-radius: var(--radi); margin-bottom: 14px;
+  font-size: 14px; font-weight: 500; display: none;
+}
+.avis.ok  { background: #e3f3eb; color: var(--verd-fosc); display: block; }
+.avis.err { background: #fdecea; color: var(--vermell); display: block; }
+
+.buit { color: var(--text-suau); padding: 20px 0; text-align: center; }
+
+/* --- Tabla admin --- */
+table { width: 100%; border-collapse: collapse; background: #fff;
+        border: 1px solid var(--gris-vora); border-radius: var(--radi); overflow: hidden; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--gris-vora); font-size: 14px; }
+th { background: var(--gris-fons); font-size: 13px; text-transform: uppercase; letter-spacing: .4px; }
+tr:last-child td { border-bottom: none; }
+
+.admin-seccio { margin-bottom: 30px; }
+.amagat { display: none !important; }
+
+@media (max-width: 520px) {
+  .targeta { flex-direction: column; align-items: stretch; }
+  .detall .dada b { width: auto; display: block; }
+}

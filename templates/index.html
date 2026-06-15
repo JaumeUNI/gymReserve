@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GymReserve</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header>
+    <div class="logo" onclick="carregarCalendari(); mostrarVista('vista-calendari')">GymReserve</div>
+    <nav id="nav"></nav>
+  </header>
+
+  <main>
+    <div id="avis" class="avis"></div>
+
+    <!-- ===== CALENDARIO (página de inicio + listado) ===== -->
+    <section id="vista-calendari" class="vista activa">
+      <h1>Classes disponibles</h1>
+      <p class="subtitol">Consulta el calendari i reserva la teva plaça.</p>
+
+      <div class="filtres">
+        <select id="filtreActivitat" onchange="carregarCalendari()"></select>
+        <input type="date" id="filtreData" onchange="carregarCalendari()">
+        <input type="text" id="filtreMonitor" placeholder="Monitor..." oninput="carregarCalendari()">
+        <button class="secundari" onclick="filtreActivitat.value='';filtreData.value='';filtreMonitor.value='';carregarCalendari()">Neteja</button>
+      </div>
+
+      <div id="llistaClasses"></div>
+    </section>
+
+    <!-- ===== DETALLE DE CLASE ===== -->
+    <section id="vista-detall" class="vista">
+      <button class="secundari petit" onclick="carregarCalendari(); mostrarVista('vista-calendari')">← Torna</button>
+      <div class="detall" id="detallContingut" style="margin-top:14px"></div>
+    </section>
+
+    <!-- ===== LOGIN ===== -->
+    <section id="vista-login" class="vista">
+      <h1 style="text-align:center">Inicia sessió</h1>
+      <p class="subtitol" style="text-align:center">Accedeix per reservar classes.</p>
+      <div class="form">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="el-teu@email.cat">
+        <label>Contrasenya</label>
+        <input type="password" id="loginPass">
+        <button onclick="ferLogin()">Entra</button>
+        <button class="enllac" onclick="mostrarVista('vista-registre')">No tens compte? Registra't</button>
+      </div>
+    </section>
+
+    <!-- ===== REGISTRO ===== -->
+    <section id="vista-registre" class="vista">
+      <h1 style="text-align:center">Crea el teu compte</h1>
+      <p class="subtitol" style="text-align:center">Fes-te soci en un minut.</p>
+      <div class="form">
+        <label>Nom</label>
+        <input type="text" id="regNom">
+        <label>Email</label>
+        <input type="email" id="regEmail">
+        <label>Contrasenya</label>
+        <input type="password" id="regPass">
+        <button onclick="ferRegistre()">Registra't</button>
+        <button class="enllac" onclick="mostrarVista('vista-login')">Ja tens compte? Inicia sessió</button>
+      </div>
+    </section>
+
+    <!-- ===== PERFIL E HISTORIAL ===== -->
+    <section id="vista-perfil" class="vista">
+      <h1>El meu perfil</h1>
+
+      <div class="detall" id="perfilDades" style="margin-bottom:16px"></div>
+
+      <details style="margin-bottom:24px">
+        <summary style="cursor:pointer;font-weight:600;color:var(--verd)">Edita les meves dades</summary>
+        <div class="form" style="margin-top:12px;max-width:380px">
+          <label>Nom</label>
+          <input type="text" id="editNom">
+          <label>Nova contrasenya (deixa-ho buit per no canviar-la)</label>
+          <input type="password" id="editPass">
+          <button onclick="guardarPerfil()">Desa els canvis</button>
+        </div>
+      </details>
+
+      <h2>Pròximes classes</h2>
+      <div id="properes"></div>
+
+      <h2>Historial</h2>
+      <div id="historial"></div>
+    </section>
+
+    <!-- ===== ADMIN ===== -->
+    <section id="vista-admin" class="vista">
+      <h1>Panell d'administració</h1>
+      <p class="subtitol">Gestiona activitats i classes.</p>
+
+      <div class="admin-seccio">
+        <h2>Activitats</h2>
+        <div id="adminActivitats"></div>
+        <div class="form" style="max-width:100%;margin-top:14px">
+          <div class="filtres">
+            <input type="text" id="novaActNom" placeholder="Nom (ex: Zumba)">
+            <input type="text" id="novaActDesc" placeholder="Descripció">
+            <input type="number" id="novaActDurada" placeholder="Durada (min)" style="width:140px">
+            <button onclick="crearActivitat()">Afegeix activitat</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-seccio">
+        <h2>Classes programades</h2>
+        <div id="adminClasses"></div>
+        <div class="form" style="max-width:100%;margin-top:14px">
+          <div class="filtres">
+            <select id="novaClasseActivitat"></select>
+            <input type="text" id="novaClasseMonitor" placeholder="Monitor">
+            <input type="text" id="novaClasseSala" placeholder="Sala">
+            <input type="datetime-local" id="novaClasseData">
+            <input type="number" id="novaClasseAforament" placeholder="Aforament" style="width:130px">
+            <button onclick="crearClasse()">Programa classe</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
