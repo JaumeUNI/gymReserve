@@ -1,3 +1,4 @@
+
 """
 GymReserve — API i servidor de l'aplicació.
 

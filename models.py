@@ -39,21 +39,6 @@ class Activitat(Base):
     classes = relationship("Classe", back_populates="activitat")
 
 
-class Classe(Base):
-    __tablename__ = "classes"
-
-    id = Column(Integer, primary_key=True, index=True)
-    activitat_id = Column(Integer, ForeignKey("activitats.id"), nullable=False)
-    monitor = Column(String(100), nullable=False)
-    sala = Column(String(50), nullable=False)
-    data_hora = Column(DateTime, nullable=False)
-    aforament_max = Column(Integer, nullable=False)
-    places_lliures = Column(Integer, nullable=False)   # contador anti-overbooking
-
-    activitat = relationship("Activitat", back_populates="classes")
-    reserves = relationship("Reserva", back_populates="classe")
-
-
 class Reserva(Base):
     __tablename__ = "reserves"
 
@@ -70,3 +55,18 @@ class Reserva(Base):
     __table_args__ = (
         UniqueConstraint("usuari_id", "classe_id", name="uq_usuari_classe"),
     )
+
+
+class Classe(Base):
+    __tablename__ = "classes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activitat_id = Column(Integer, ForeignKey("activitats.id"), nullable=False)
+    monitor = Column(String(100), nullable=False)
+    sala = Column(String(50), nullable=False)
+    data_hora = Column(DateTime, nullable=False)
+    aforament_max = Column(Integer, nullable=False)
+    places_lliures = Column(Integer, nullable=False)   # contador anti-overbooking
+
+    activitat = relationship("Activitat", back_populates="classes")
+    reserves = relationship("Reserva", back_populates="classe")
