@@ -10,8 +10,6 @@ Cada ruta fa tres coses:
 Tota la lògica de negoci està centralitzada a services.py. Les rutes només validen
 les dades mínimes d'entrada i deleguen.
 
-Per arrencar:  flask --app main run   (o bé:  python main.py)
-Després obrir: http://127.0.0.1:8000
 """
 from flask import Flask, request, jsonify, g, send_from_directory, make_response
 
@@ -294,4 +292,4 @@ def home():
 
 if __name__ == "__main__":
     # Arrencada directa amb: python main.py
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True, ssl_context=("cert.pem", "key.pem"))
