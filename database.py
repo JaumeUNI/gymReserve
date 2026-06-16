@@ -1,35 +1,28 @@
 """
-Configuración de la base de datos.
+Configuració de la base de dades.
 
-Usamos SQLite (un único fichero gymreserve.db) para que el proyecto se pueda
-arrancar sin instalar ningún servidor de base de datos. SQLAlchemy se encarga
-de traducir nuestras clases Python a tablas SQL.
+Ens connectem a MySQL mitjançant SQLAlchemy. La URL de connexió té el format:
+    mysql+pymysql://usuari:contrasenya@servidor:port/nom_de_la_bd
 """
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# La base de datos es un fichero local llamado gymreserve.db
-SQLALCHEMY_DATABASE_URL = "sqlite:///./gymreserve.db"
+# Dades de connexió a la base de dades MySQL.
+SQLALCHEMY_DATABASE_URL = "mysql+pymysql://pol:Pol123!!!@localhost:3306/gymreserve"
 
-# check_same_thread=False es necesario en SQLite cuando se usa con FastAPI,
-# porque cada petición puede atenderse desde un hilo distinto.
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-)
+# pool_pre_ping comprova que la connexió segueix viva abans de fer-la servir
+# (evita errors si MySQL ha tancat una connexió inactiva).
+engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
 
-# Cada SessionLocal() es una sesión/conexión a la base de datos.
+# Cada SessionLocal() és una sessió/connexió a la base de dades.
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Todos los modelos heredarán de esta clase Base.
+# Tots els models heretaran d'aquesta classe Base.
 Base = declarative_base()
 
 
 def get_db():
-    """
-    Dependencia de FastAPI: abre una sesión de BD para la petición y la cierra
-    al terminar. Se usa con Depends(get_db) en cada endpoint que toque la BD.
-    """
+    """Obre una sessió de BD i la tanca en acabar."""
     db = SessionLocal()
     try:
         yield db

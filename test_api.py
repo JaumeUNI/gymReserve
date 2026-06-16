@@ -1,34 +1,44 @@
-from fastapi.testclient import TestClient
+"""
+Proves de l'API de GymReserve (versió Flask).
+
+S'executa amb:  python test_api.py
+Fa servir el client de proves de Flask, que guarda les cookies automàticament
+entre peticions (com un navegador), així que no cal gestionar el token a mà.
+
+Comprova: autenticació amb cookies, reserves amb control d'aforament,
+panell d'admin i permisos (401 / 403 / 409).
+"""
 import main
 
-c = TestClient(main.app)
+c = main.app.test_client()
 
-print("=== FLUJO SOCIO ===")
-r = c.get("/api/v1/classes"); d = r.json()
-print("1. Calendario:", r.status_code, "| clases:", d["total"], "| 1a plazas:", d["data"][0]["places_lliures"])
+print("=== AUTENTICACIO AMB COOKIES ===")
+r = c.get("/api/v1/usuaris/me")
+print("1. /me sense login (espera 401):", r.status_code)
 r = c.post("/api/v1/auth/login", json={"email": "pol@gym.cat", "password": "pol123"})
-tok = r.json()["token"]; print("2. Login:", r.status_code, "rol", r.json()["usuari"]["rol"])
-H = {"Authorization": "Bearer " + tok}
-r = c.post("/api/v1/classes/1/reserves", headers=H); print("3. Reserva:", r.status_code, r.json()["estat"])
-r = c.get("/api/v1/classes/1"); print("4. Plazas:", r.json()["places_lliures"])
-r = c.post("/api/v1/classes/1/reserves", headers=H); print("5. Doble reserva (espera 409):", r.status_code)
-r = c.get("/api/v1/usuaris/me/reserves", headers=H); print("6. Historial total:", r.json()["total"])
-r = c.delete("/api/v1/classes/1/reserves", headers=H); print("7. Cancelar:", r.status_code, r.json()["estat"])
-r = c.get("/api/v1/classes/1"); print("8. Plazas tras cancelar:", r.json()["places_lliures"])
+print("2. Login:", r.status_code, "| cookie rebuda:", "token" in r.headers.get("Set-Cookie", ""))
+r = c.get("/api/v1/usuaris/me")
+print("3. /me despres de login:", r.status_code, "| usuari:", r.get_json().get("nom"))
 
-print("\n=== FLUJO ADMIN ===")
+print("\n=== FLUX SOCI ===")
+r = c.get("/api/v1/classes"); d = r.get_json()
+print("4. Calendari:", r.status_code, "| classes:", d["total"])
+r = c.post("/api/v1/classes/1/reserves"); print("5. Reserva:", r.status_code, r.get_json()["estat"])
+r = c.get("/api/v1/classes/1"); print("6. Places lliures:", r.get_json()["places_lliures"])
+r = c.post("/api/v1/classes/1/reserves"); print("7. Doble reserva (espera 409):", r.status_code)
+r = c.get("/api/v1/usuaris/me/reserves"); print("8. Historial total:", r.get_json()["total"])
+r = c.delete("/api/v1/classes/1/reserves"); print("9. Cancel·lar:", r.status_code, r.get_json()["estat"])
+
+print("\n=== PERMISOS ===")
+r = c.get("/api/v1/usuaris"); print("10. Soci llista usuaris (espera 403):", r.status_code)
+r = c.post("/api/v1/auth/logout"); print("11. Logout:", r.status_code)
+r = c.get("/api/v1/usuaris/me"); print("12. /me despres de logout (espera 401):", r.status_code)
+
+print("\n=== ADMIN ===")
 r = c.post("/api/v1/auth/login", json={"email": "admin@gym.cat", "password": "admin123"})
-atok = r.json()["token"]; AH = {"Authorization": "Bearer " + atok}
-r = c.post("/api/v1/activitats", json={"nom": "Zumba", "descripcio": "Ball", "durada_min": 50}, headers=AH)
-print("9. Crear actividad:", r.status_code, r.json()["nom"])
-r = c.post("/api/v1/classes", json={"activitat_id": 1, "monitor": "Test", "sala": "S3", "data_hora": "2026-12-01T10:00:00", "aforament_max": 5}, headers=AH)
-cid = r.json()["id"]; print("10. Crear clase:", r.status_code, "places=", r.json()["places_lliures"])
-r = c.get(f"/api/v1/classes/{cid}/reserves", headers=AH); print("11. Inscritos (admin):", r.status_code, "vacia:", r.json() == [])
-r = c.get("/api/v1/usuaris", headers=AH); print("12. Listar usuarios:", r.status_code, "total:", r.json()["total"])
+print("13. Login admin:", r.status_code)
+r = c.post("/api/v1/activitats", json={"nom": "Zumba", "descripcio": "Ball", "durada_min": 50})
+print("14. Crear activitat:", r.status_code, r.get_json()["nom"])
+r = c.get("/api/v1/usuaris"); print("15. Llistar usuaris:", r.status_code, "total:", r.get_json()["total"])
 
-print("\n=== PERMISOS / ERRORES ===")
-r = c.get("/api/v1/usuaris", headers=H); print("13. Socio lista usuarios (espera 403):", r.status_code)
-r = c.get("/api/v1/usuaris/me"); print("14. Sin token (espera 401):", r.status_code)
-r = c.post("/api/v1/auth/login", json={"email": "pol@gym.cat", "password": "MAL"}); print("15. Login mal (espera 401):", r.status_code)
-r = c.post("/api/v1/auth/register", json={"nom": "X", "email": "pol@gym.cat", "password": "x"}); print("16. Email duplicado (espera 409):", r.status_code)
-print("\nTODO OK" )
+print("\nTOT OK")

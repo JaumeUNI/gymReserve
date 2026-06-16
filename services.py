@@ -8,7 +8,7 @@ duplicades, es valida que un email sigui únic, etc.
 
 Cada funció rep la sessió de base de dades (db) com a primer paràmetre i s'encarrega
 de fer les consultes i d'aplicar les regles. Quan alguna cosa no és vàlida, llança
-una HTTPException amb el codi d'estat adequat (404, 409, etc.), que FastAPI converteix
+un APIError amb el codi d'estat adequat (404, 409, etc.), que main.py converteix
 automàticament en la resposta d'error.
 
 Organització:
@@ -20,7 +20,7 @@ Organització:
 from datetime import datetime
 from typing import Optional
 
-from fastapi import HTTPException
+from errors import APIError
 from sqlalchemy.orm import Session
 
 import models
@@ -34,7 +34,7 @@ import auth
 def registrar_usuari(db: Session, nom: str, email: str, password: str) -> models.Usuario:
     """Crea un nou soci. Regla: l'email ha de ser únic al sistema."""
     if db.query(models.Usuario).filter(models.Usuario.email == email).first():
-        raise HTTPException(status_code=409, detail="Aquest email ja està registrat")
+        raise APIError(409, "Aquest email ja està registrat")
 
     usuari = models.Usuario(
         nom=nom,
@@ -52,7 +52,7 @@ def autenticar_usuari(db: Session, email: str, password: str) -> models.Usuario:
     """Comprova les credencials i retorna l'usuari. Regla: email + contrasenya correctes."""
     usuari = db.query(models.Usuario).filter(models.Usuario.email == email).first()
     if not usuari or not auth.verify_password(password, usuari.password_hash):
-        raise HTTPException(status_code=401, detail="Credencials incorrectes")
+        raise APIError(401, "Credencials incorrectes")
     return usuari
 
 
@@ -82,7 +82,7 @@ def obtenir_usuari(db: Session, usuari_id: int) -> models.Usuario:
     """Retorna un usuari pel seu ID o llança 404 si no existeix."""
     usuari = db.query(models.Usuario).filter(models.Usuario.id == usuari_id).first()
     if not usuari:
-        raise HTTPException(status_code=404, detail="Usuari no trobat")
+        raise APIError(404, "Usuari no trobat")
     return usuari
 
 
@@ -105,7 +105,7 @@ def llistar_activitats(db: Session):
 def obtenir_activitat(db: Session, activitat_id: int) -> models.Activitat:
     activitat = db.query(models.Activitat).filter(models.Activitat.id == activitat_id).first()
     if not activitat:
-        raise HTTPException(status_code=404, detail="Activitat no trobada")
+        raise APIError(404, "Activitat no trobada")
     return activitat
 
 
@@ -136,7 +136,7 @@ def eliminar_activitat(db: Session, activitat_id: int) -> None:
         models.Classe.data_hora >= datetime.utcnow(),
     ).first()
     if te_classes_futures:
-        raise HTTPException(status_code=409, detail="No es pot eliminar: té classes programades")
+        raise APIError(409, "No es pot eliminar: té classes programades")
     db.delete(activitat)
     db.commit()
 
@@ -158,7 +158,7 @@ def llistar_classes(db: Session, activitat_id: Optional[int], data: Optional[str
         try:
             dia = datetime.strptime(data, "%Y-%m-%d")
         except ValueError:
-            raise HTTPException(status_code=400, detail="Format de data invàlid")
+            raise APIError(400, "Format de data invàlid")
         fi_del_dia = dia.replace(hour=23, minute=59, second=59)
         query = query.filter(models.Classe.data_hora >= dia,
                             models.Classe.data_hora <= fi_del_dia)
@@ -172,7 +172,7 @@ def llistar_classes(db: Session, activitat_id: Optional[int], data: Optional[str
 def obtenir_classe(db: Session, classe_id: int) -> models.Classe:
     classe = db.query(models.Classe).filter(models.Classe.id == classe_id).first()
     if not classe:
-        raise HTTPException(status_code=404, detail="Classe no trobada")
+        raise APIError(404, "Classe no trobada")
     return classe
 
 
@@ -180,7 +180,7 @@ def crear_classe(db: Session, activitat_id: int, monitor: str, sala: str,
                  data_hora: datetime, aforament_max: int) -> models.Classe:
     """Programa una classe nova. Regla: l'activitat ha d'existir; places_lliures comença ple."""
     if not db.query(models.Activitat).filter(models.Activitat.id == activitat_id).first():
-        raise HTTPException(status_code=422, detail="L'activitat no existeix")
+        raise APIError(422, "L'activitat no existeix")
 
     classe = models.Classe(
         activitat_id=activitat_id,
@@ -209,10 +209,7 @@ def actualitzar_classe(db: Session, classe_id: int, monitor: str, sala: str,
         models.Reserva.estat == "confirmada",
     ).count()
     if aforament_max < reserves_actuals:
-        raise HTTPException(
-            status_code=409,
-            detail="L'aforament no pot ser menor que les reserves actuals",
-        )
+        raise APIError(409, "L'aforament no pot ser menor que les reserves actuals")
 
     classe.monitor = monitor
     classe.sala = sala
@@ -254,11 +251,11 @@ def reservar_plaça(db: Session, classe_id: int, usuari: models.Usuario) -> mode
         models.Reserva.estat == "confirmada",
     ).first()
     if ja_inscrit:
-        raise HTTPException(status_code=409, detail="Ja estàs inscrit en aquesta classe")
+        raise APIError(409, "Ja estàs inscrit en aquesta classe")
 
     # Regla 3: hi ha lloc?
     if classe.places_lliures <= 0:
-        raise HTTPException(status_code=409, detail="La classe està plena")
+        raise APIError(409, "La classe està plena")
 
     # Si abans havia cancel·lat, reactivem la reserva en comptes de duplicar-la.
     reserva_previa = db.query(models.Reserva).filter(
@@ -290,7 +287,7 @@ def cancelar_reserva(db: Session, classe_id: int, usuari: models.Usuario) -> mod
         models.Reserva.estat == "confirmada",
     ).first()
     if not reserva:
-        raise HTTPException(status_code=404, detail="No tens cap reserva activa aquí")
+        raise APIError(404, "No tens cap reserva activa aquí")
 
     reserva.estat = "cancel·lada"
     classe = db.query(models.Classe).filter(models.Classe.id == classe_id).first()

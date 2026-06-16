@@ -1,20 +1,25 @@
 /* GymReserve — lógica del frontend
  *
  * Una sola página con varias "vistas" (divs) que se muestran/ocultan.
- * Todas las llamadas pasan por la función api(), que añade el token JWT
- * si el usuario ha iniciado sesión.
+ * L'autenticació funciona amb una COOKIE: quan fas login, el servidor desa el
+ * token JWT en una cookie i el navegador la torna a enviar sola en cada petició.
+ * Per això aquí no guardem cap token; només guardem qui és l'usuari per pintar el menú.
  */
 
 const API = "/api/v1";
 
-// Estado de sesión guardado en memoria (token + datos del usuario).
-let sessio = { token: null, usuari: null };
+// Només guardem les dades de l'usuari (nom, rol) per saber què mostrar al menú.
+// El token NO el guardem: viatja sol dins la cookie.
+let sessio = { usuari: null };
 
 
 // ---------- Llamada genérica a la API ----------
 async function api(ruta, metode = "GET", cos = null) {
-  const opcions = { method: metode, headers: {} };
-  if (sessio.token) opcions.headers["Authorization"] = "Bearer " + sessio.token;
+  const opcions = {
+    method: metode,
+    headers: {},
+    credentials: "same-origin",   // important: fa que el navegador enviï la cookie
+  };
   if (cos) {
     opcions.headers["Content-Type"] = "application/json";
     opcions.body = JSON.stringify(cos);
@@ -66,7 +71,8 @@ async function ferLogin() {
       email: loginEmail.value,
       password: loginPass.value,
     });
-    sessio = { token: dades.token, usuari: dades.usuari };
+    // El token ja s'ha desat a la cookie pel servidor; aquí només guardem l'usuari.
+    sessio = { usuari: dades.usuari };
     refrescarNav();
     avis("Sessió iniciada");
     carregarCalendari();
@@ -87,8 +93,8 @@ async function ferRegistre() {
 }
 
 async function logout() {
-  try { await api("/auth/logout", "POST"); } catch (e) { /* el token igual se borra */ }
-  sessio = { token: null, usuari: null };
+  try { await api("/auth/logout", "POST"); } catch (e) { /* la cookie igual es borra */ }
+  sessio = { usuari: null };
   refrescarNav();
   carregarCalendari();
   mostrarVista("vista-calendari");
@@ -323,7 +329,19 @@ async function esborrarClasse(id) {
 
 
 // ---------- Arranque ----------
-window.addEventListener("DOMContentLoaded", () => {
+async function comprovarSessio() {
+  // Si la cookie encara és vàlida, /usuaris/me ens tornarà l'usuari i seguim
+  // amb la sessió iniciada (encara que haguem recarregat la pàgina).
+  try {
+    const usuari = await api("/usuaris/me");
+    sessio = { usuari: usuari };
+  } catch (e) {
+    sessio = { usuari: null };   // no hi ha sessió o ha caducat
+  }
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  await comprovarSessio();
   refrescarNav();
   carregarFiltres();
   carregarCalendari();

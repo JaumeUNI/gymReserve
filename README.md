@@ -3,23 +3,24 @@
 Aplicació web de reserva de classes per a un gimnàs. Projecte de l'assignatura
 **Arquitectura de Sistemes Web** (ATWSM) — Grup 12.
 
-- **Backend:** FastAPI (Python)
-- **Base de dades:** SQLite (fitxer `gymreserve.db`)
-- **Frontend:** HTML + CSS + JavaScript
-- **Autenticació:** JWT (JSON Web Tokens)
+- **Backend:** Flask (Python)
+- **Base de dades:** MySQL (amb SQLAlchemy)
+- **Frontend:** HTML + CSS + JavaScript (sense frameworks)
+- **Autenticació:** JWT desat en una **cookie**
 
 ## Estructura del projecte
 
 ```
 gymreserve/
-├── main.py          # Endpoints de l'API (només reben la petició i criden el servei)
+├── main.py          # Rutes de l'API Flask (reben la petició i criden el servei)
 ├── services.py      # LÒGICA DE NEGOCI centralitzada (aforament, duplicats, regles...)
-├── database.py      # Connexió a la base de dades (SQLAlchemy)
+├── auth.py          # Hash de contrasenyes (bcrypt) + JWT en cookie + decoradors de rol
+├── serialize.py     # Converteix els objectes de la BD en diccionaris (JSON)
+├── errors.py        # Excepció APIError per als errors de negoci
+├── database.py      # Connexió a la base de dades MySQL (SQLAlchemy)
 ├── models.py        # Models / taules: Usuario, Activitat, Classe, Reserva
-├── schemas.py       # Schemas Pydantic (validació d'entrada i sortida)
-├── auth.py          # Hash de contrasenyes (bcrypt) i tokens JWT
 ├── seed.py          # Omple la BD amb dades d'exemple
-├── test_api.py      # Proves de l'API (flux soci, admin, permisos)
+├── test_api.py      # Proves de l'API (cookies, reserves, admin, permisos)
 ├── requirements.txt
 ├── templates/
 │   └── index.html   # Pàgina única amb totes les vistes
@@ -30,34 +31,48 @@ gymreserve/
 
 ## Arquitectura (separació de capes)
 
-El backend està organitzat en capes perquè la lògica de negoci estigui en un sol lloc:
-
 ```
-  Endpoints (main.py)  →  Serveis (services.py)  →  Models / BBDD (models.py)
-     "rep la petició"      "aplica les regles"       "fa les consultes SQL"
+  Rutes (main.py)  →  Serveis (services.py)  →  Models / BBDD (models.py)
+   "rep la petició"   "aplica les regles"       "fa les consultes SQL"
 ```
 
-- **main.py** només rep la petició, comprova el rol i crida el servei. No conté regles.
-- **services.py** és el cor: comprova l'aforament, evita reserves duplicades,
-  valida que un email sigui únic, decrementa places, etc. Si una regla canvia,
-  es toca aquí i només aquí.
+- **main.py** només rep la petició, valida les dades mínimes, comprova el rol
+  (amb els decoradors `@login_requerit` / `@admin_requerit`) i crida el servei.
+- **services.py** és el cor: comprova l'aforament, evita reserves duplicades, etc.
+  Quan una regla falla, llança un `APIError` que main.py converteix en resposta JSON.
 - **models.py** defineix les taules de la base de dades.
 
-## Com posar-lo en marxa
+## Autenticació amb cookies
+
+Quan l'usuari fa login, el servidor genera un token JWT i el desa en una **cookie**
+(`Set-Cookie`). El navegador la guarda i la torna a enviar automàticament en cada
+petició, així que el frontend no ha de gestionar el token a mà. Al fer logout, el
+servidor esborra la cookie.
+
+## Base de dades (MySQL)
+
+La connexió a MySQL està definida a `database.py` (variable `SQLALCHEMY_DATABASE_URL`).
+Format de la URL:
+
+```
+mysql+pymysql://usuari:contrasenya@servidor:port/nom_bd
+```
+
+## Posada en marxa (local o servidor)
 
 ```bash
 # 1. Instal·lar dependències
 pip install -r requirements.txt
 
-# 2. Omplir la base de dades amb dades d'exemple
+# 2. Omplir la base de dades amb dades d'exemple (només el primer cop)
 python seed.py
 
 # 3. Arrencar el servidor
-uvicorn main:app --reload
+python main.py
+#    (o bé:  flask --app main run --host 0.0.0.0 --port 8000)
 
 # 4. Obrir al navegador
-#    http://127.0.0.1:8000          → l'aplicació
-#    http://127.0.0.1:8000/docs     → documentació interactiva de l'API (Swagger)
+#    http://127.0.0.1:8000
 ```
 
 ## Usuaris d'exemple
@@ -73,16 +88,11 @@ uvicorn main:app --reload
 python test_api.py
 ```
 
-Comprova el flux complet: calendari públic, login, reserva amb control d'aforament,
-historial, cancel·lació, CRUD d'admin i els permisos (401 / 403 / 409).
-
 ## Funcionalitats
 
-- Registre i login de socis (autenticació JWT).
+- Registre i login de socis (autenticació JWT en cookie).
 - Calendari públic de classes amb filtres (activitat, dia, monitor).
 - Reserva i cancel·lació de places amb control d'aforament (sense overbooking).
 - Historial de reserves de cada soci.
 - Panell d'administració: CRUD d'activitats i classes, veure ocupació.
 - Edició del perfil propi.
-```
-```

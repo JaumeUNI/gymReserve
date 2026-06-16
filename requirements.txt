@@ -1,7 +1,6 @@
-fastapi
-uvicorn[standard]
+flask
 sqlalchemy
-pydantic[email]
 python-jose[cryptography]
 bcrypt
-python-multipart
+pymysql
+cryptography
