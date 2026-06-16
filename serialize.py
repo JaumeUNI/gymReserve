@@ -1,11 +1,15 @@
 """
-Serialització (objectes -> diccionaris).
+Aquí convertim els objectes de la base de dades en diccionaris.
 
-A FastAPI els schemas de Pydantic s'encarregaven de convertir els objectes de la
-base de dades en JSON i de decidir quins camps es mostraven. A Flask ho fem amb
-aquestes funcions: reben un objecte de SQLAlchemy i retornen un diccionari net
-(per exemple, mai retornem el password_hash de l'usuari).
+Quan demanem coses a la base de dades (un usuari, una classe...), ens tornen
+objectes de Python que no es poden enviar directament al navegador. Aquestes
+funcions agafen aquests objectes i els transformen en diccionaris senzills,
+que després s'envien com a JSON.
+
+També ens serveix per decidir què ensenyem i què no: per exemple, mai enviem
+la contrasenya de l'usuari, encara que la tinguem guardada.
 """
+from datetime import datetime
 
 
 def usuari_dict(u):
@@ -49,14 +53,20 @@ def reserva_dict(r):
         "estat": r.estat,
     }
 
-
 def reserva_historial_dict(r):
-    """Reserva amb la informació de la classe inclosa (per a l'historial del soci)."""
+    """
+    Reserva amb la informació de la classe inclosa (per a l'historial del soci).
+    Si la reserva està confirmada i la classe ja ha passat, es mostra com a "assistida".
+    """
+    estat = r.estat
+    if estat == "confirmada" and r.classe and r.classe.data_hora < datetime.now():
+        estat = "assistida"
+
     return {
         "id": r.id,
         "classe": classe_dict(r.classe),
         "data_reserva": r.data_reserva.isoformat() if r.data_reserva else None,
-        "estat": r.estat,
+        "estat": estat,
     }
 
 

@@ -149,6 +149,8 @@ def llistar_classes(db: Session, activitat_id: Optional[int], data: Optional[str
                     monitor: Optional[str], page: int, per_page: int):
     """Calendari de classes amb filtres opcionals (activitat, dia, monitor)."""
     query = db.query(models.Classe)
+    # Només mostrem classes que encara no han passat (futures).
+    query = query.filter(models.Classe.data_hora >= datetime.now())
 
     if activitat_id:
         query = query.filter(models.Classe.activitat_id == activitat_id)
